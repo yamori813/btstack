@@ -553,7 +553,9 @@ static int usb_open(void *transport_config){
     libusb_state = LIB_USB_OPENED;
 
     // configure debug level
+#ifdef LIBUSB_LOG_LEVEL_WARNING
     libusb_set_debug(NULL, LIBUSB_LOG_LEVEL_WARNING);
+#endif
     
 #ifdef HAVE_USB_VENDOR_ID_AND_PRODUCT_ID
 
