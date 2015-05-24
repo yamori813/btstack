@@ -48,9 +48,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef __PIC32MX__
 #include <sys/uio.h>
 #include <unistd.h>
 #include <termios.h>
+#endif
 
 #include "btstack-config.h"
 
