@@ -41,7 +41,7 @@
 
 #include "hci.h"
 
-#include "sm.h"
+//#include "sm.h"
 
 extern void (*xfunc_out)(unsigned char);
 extern void setup(void);
@@ -163,28 +163,4 @@ int main(void)
 	
     // happy compiler!
     return 0;
-}
-
-write()
-{
-}
-
-close()
-{
-}
-
-fstat()
-{
-}
-
-isatty()
-{
-}
-
-lseek()
-{
-}
-
-read()
-{
 }

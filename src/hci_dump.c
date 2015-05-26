@@ -126,6 +126,7 @@ void hci_dump_set_max_packets(int packets){
 #endif
 
 static inline void printf_packet(uint8_t packet_type, uint8_t in, uint8_t * packet, uint16_t len){
+#ifndef EMBEDDED
     switch (packet_type){
         case HCI_COMMAND_DATA_PACKET:
             printf("CMD => ");
@@ -147,6 +148,7 @@ static inline void printf_packet(uint8_t packet_type, uint8_t in, uint8_t * pack
             return;
     }
     printf_hexdump(packet, len);  
+#endif
 }
 
 void hci_dump_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t len) {
@@ -158,7 +160,7 @@ void hci_dump_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t 
 //     uint32_t time_ms = embedded_get_time_ms();
 //     printf("[%06u] ", time_ms);
 // #endif
-    printf_packet(packet_type, in, packet, len);
+//    printf_packet(packet_type, in, packet, len);
 #else
     // don't grow bigger than max_nr_packets
     if (dump_format != HCI_DUMP_STDOUT && max_nr_packets > 0){

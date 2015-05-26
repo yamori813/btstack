@@ -112,9 +112,9 @@ void printf_hexdump(const void *data, int size){
     if (size <= 0) return;
     int i;
     for (i=0; i<size;i++){
-        printf("%02X ", ((uint8_t *)data)[i]);
+//        printf("%02X ", ((uint8_t *)data)[i]);
     }
-    printf("\n");
+//    printf("\n");
 }
 
 void hexdump(const void *data, int size){
@@ -163,13 +163,13 @@ void hexdumpf(const void *data, int size){
         buffer[j++] = ' ';     
         if (j >= 6*16 ){
             buffer[j] = 0;
-            printf("%s\n", buffer);
+//            printf("%s\n", buffer);
             j = 0;
         }
     }
     if (j != 0){
         buffer[j] = 0;
-        printf("%s\n", buffer);
+//        printf("%s\n", buffer);
     }
 }
 
@@ -186,7 +186,7 @@ char * uuid128_to_str(uint8_t * uuid){
     return uuid128_to_str_buffer;
 }
 void printUUID128(uint8_t *uuid) {
-    printf("%s", uuid128_to_str(uuid));
+//    printf("%s", uuid128_to_str(uuid));
 }
 
 static char bd_addr_to_str_buffer[6*3];  // 12:45:78:01:34:67\0

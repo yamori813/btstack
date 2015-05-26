@@ -25,6 +25,9 @@ CFLAGS  += $(shell pkg-config libusb-1.0 --cflags)
 LDFLAGS += $(shell pkg-config libusb-1.0 --libs)
 endif
 
+CFLAGS += -I../../../../OpenSrouce/libusb-1.0.9/libusb
+LDFLAGS += -L/usr/local/lib -lusb-1.0
+
 # Command Line examples require porting to win32, so only build on other unix-ish hosts
 ifneq ($(OS),Windows_NT)
 EXAMPLES += ${EXAMPLES_CLI}

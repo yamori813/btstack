@@ -100,7 +100,7 @@ static void app_run(void){
     if (!hci_can_send_command_packet_now()) return;
 
     if (todos & SET_ADVERTISEMENT_DATA){
-        printf("app_run: set advertisement data\n");
+//        printf("app_run: set advertisement data\n");
         todos &= ~SET_ADVERTISEMENT_DATA;
         hci_send_cmd(&hci_le_set_advertising_data, adv_data_len, adv_data);
         return;
@@ -118,7 +118,7 @@ static void app_run(void){
     }    
 
     if (todos & ENABLE_ADVERTISEMENTS){
-        printf("app_run: enable advertisements\n");
+//        printf("app_run: enable advertisements\n");
         todos &= ~ENABLE_ADVERTISEMENTS;
         hci_send_cmd(&hci_le_set_advertise_enable, 1);
         return;
@@ -135,7 +135,7 @@ static void app_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *
                 case BTSTACK_EVENT_STATE:
                     // bt stack activated, get started
                     if (packet[2] == HCI_STATE_WORKING) {
-                        printf("SM Init completed\n");
+//                        printf("SM Init completed\n");
                         todos = SET_ADVERTISEMENT_PARAMS | SET_ADVERTISEMENT_DATA | ENABLE_ADVERTISEMENTS;
                         app_run();
                     }
@@ -160,15 +160,15 @@ void ancs_callback(ancs_event_t * event){
     const char * attribute_name;
     switch (event->type){
         case ANCS_CLIENT_CONNECTED:
-            printf("ANCS Client: Connected\n");
+//            printf("ANCS Client: Connected\n");
             break;
         case ANCS_CLIENT_DISCONNECTED:
-            printf("ANCS Client: Disconnected\n");
+//            printf("ANCS Client: Disconnected\n");
             break;
         case ANCS_CLIENT_NOTIFICATION:
             attribute_name = ancs_client_attribute_name_for_id(event->attribute_id);
             if (!attribute_name) break;
-            printf("Notification: %s - %s\n", attribute_name, event->text);
+//            printf("Notification: %s - %s\n", attribute_name, event->text);
             break;
         default:
             break;
@@ -178,7 +178,7 @@ void ancs_callback(ancs_event_t * event){
 int btstack_main(int argc, const char * argv[]);
 int btstack_main(int argc, const char * argv[]){
     
-    printf("BTstack ANCS Client starting up...\n");
+//    printf("BTstack ANCS Client starting up...\n");
 
     // set up l2cap_le
     l2cap_init();

@@ -631,18 +631,18 @@ int sdp_record_matches_service_search_pattern(uint8_t *record, uint8_t *serviceS
 static int de_traversal_dump_data(uint8_t * element, de_type_t de_type, de_size_t de_size, void *my_context){
     int indent = *(int*) my_context;
     int i;
-    for (i=0; i<indent;i++) printf("    ");
+//    for (i=0; i<indent;i++) printf("    ");
     int pos     = de_get_header_size(element);
     int end_pos = de_get_len(element);
-    printf("type %5s (%u), element len %2u ", type_names[de_type], de_type, end_pos);
+//    printf("type %5s (%u), element len %2u ", type_names[de_type], de_type, end_pos);
     if (de_type == DE_DES) {
 		printf("\n");
         indent++;
         de_traverse_sequence(element, de_traversal_dump_data, (void *)&indent);
     } else if (de_type == DE_UUID && de_size == DE_SIZE_128) {
-        printf(", value: ");
-        printUUID128(element+1);
-        printf("\n");
+//        printf(", value: ");
+//        printUUID128(element+1);
+//        printf("\n");
     } else if (de_type == DE_STRING) {
         int len = 0;
         switch (de_size){
@@ -655,8 +655,8 @@ static int de_traversal_dump_data(uint8_t * element, de_type_t de_type, de_size_
             default:
                 break;
         }
-        printf("len %u (0x%02x)\n", len, len);
-        printf_hexdump(&element[pos], len);
+//        printf("len %u (0x%02x)\n", len, len);
+//        printf_hexdump(&element[pos], len);
     } else {
         uint32_t value = 0;
         switch (de_size) {
@@ -674,7 +674,7 @@ static int de_traversal_dump_data(uint8_t * element, de_type_t de_type, de_size_
             default:
                 break;
         }
-        printf(", value: 0x%08" PRIx32 "\n", value);
+//        printf(", value: 0x%08" PRIx32 "\n", value);
     }
     return 0;
 }

@@ -740,7 +740,7 @@ static void gatt_client_run(void){
             case P_W2_SEND_WRITE_CHARACTERISTIC_DESCRIPTOR:
 
                 if (peripheral->attribute_length < peripheral_mtu(peripheral) - 3) break;
-                printf(".. ATT_ERROR_INVALID_ATTRIBUTE_VALUE_LENGTH %u > %u\n", peripheral->attribute_length, peripheral_mtu(peripheral));
+//                printf(".. ATT_ERROR_INVALID_ATTRIBUTE_VALUE_LENGTH %u > %u\n", peripheral->attribute_length, peripheral_mtu(peripheral));
                 gatt_client_handle_transaction_complete(peripheral);
                 emit_gatt_complete_event(peripheral, ATT_ERROR_INVALID_ATTRIBUTE_VALUE_LENGTH);
                 return;

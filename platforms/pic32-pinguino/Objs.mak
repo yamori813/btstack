@@ -36,3 +36,5 @@ OBJS = \
 	${BTSTACK_ROOT}/ble/le_device_db_memory.o \
 	${BTSTACK_ROOT}/ble/ancs_client_lib.o \
 	${BTSTACK_ROOT}/example/embedded/ancs_client.o
+
+
