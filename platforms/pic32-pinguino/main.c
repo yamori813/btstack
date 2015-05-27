@@ -41,8 +41,6 @@
 
 #include "hci.h"
 
-//#include "sm.h"
-
 extern void (*xfunc_out)(unsigned char);
 extern void setup(void);
 
@@ -85,8 +83,7 @@ void MyUSBScan()
 
 startbt()
 {
-//	setup();
-	btstack_main(0,0);
+	btstack_main();
 
     // turn on!
 	hci_power_control(HCI_POWER_ON);
@@ -154,6 +151,12 @@ int main(void)
     /// GET STARTED with BTstack ///
     btstack_memory_init();
     run_loop_init(RUN_LOOP_EMBEDDED);
+	
+    hci_transport_t    * transport = hci_transport_pic32_instance();
+    hci_uart_config_t  * config    = NULL;
+    bt_control_t       * control   = NULL;
+    remote_device_db_t * remote_db = (remote_device_db_t *) &remote_device_db_memory;
+    hci_init(transport, config, control, remote_db);
 
 	pic32_data.process = pic32_process_ds;
 	run_loop_add_data_source(&pic32_data);
