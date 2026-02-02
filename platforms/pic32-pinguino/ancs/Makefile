@@ -102,6 +102,6 @@ flash:
 	$(PROG) -S ancs_client.hex
 
 clean:
-	rm -f *.o PIC32/*.o PIC32_USB/*o $(BTSTACK_ROOT)/src/*.o \
-	$(BTSTACK_ROOT)/ble/*.o ../../example/embedded/*.o \
-	Microchip/USB/*.o *.elf *.hex *.map ancs_client.h
+	rm -f ../src/*.o PIC32/*.o PIC32_USB/*o $(BTSTACK_ROOT)/src/*.o \
+	$(BTSTACK_ROOT)/ble/*.o $(BTSTACK_ROOT)/example/embedded/*.o \
+	../Microchip/USB/*.o *.elf *.hex *.map ancs_client.h
