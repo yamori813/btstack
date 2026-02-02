@@ -1,0 +1,240 @@
+/*
+ * Copyright (C) 2011-2013 by BlueKitchen GmbH
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the copyright holders nor the names of
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ * 4. This software may not be used in a commercial product
+ *    without an explicit license granted by the copyright holder. 
+ *
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
+ * RINGWALD OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+//*****************************************************************************
+//
+// BLE Client
+//
+//*****************************************************************************
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <btstack/run_loop.h>
+#include <btstack/hci_cmds.h>
+#include <btstack/utils.h>
+#include <btstack/sdp_util.h>
+
+#include "btstack-config.h"
+
+#include "ad_parser.h"
+
+#include "debug.h"
+#include "btstack_memory.h"
+#include "hci.h"
+#include "hci_dump.h"
+#include "l2cap.h"
+#include "att.h"
+#include "gatt_client.h"
+#include "sm.h"
+
+#ifdef HAVE_UART_CC2564
+#include "bt_control_cc256x.h"
+#endif
+
+typedef struct advertising_report {
+    uint8_t   type;
+    uint8_t   event_type;
+    uint8_t   address_type;
+    bd_addr_t address;
+    uint8_t   rssi;
+    uint8_t   length;
+    uint8_t * data;
+} advertising_report_t;
+
+
+typedef enum {
+    TC_IDLE,
+    TC_W4_SCAN_RESULT,
+    TC_W4_CONNECT,
+    
+    TC_W4_SERVICE_RESULT,
+    TC_W4_CHARACTERISTIC_RESULT,
+    TC_W4_DISCONNECT
+} gc_state_t;
+
+static bd_addr_t cmdline_addr = { };
+static int cmdline_addr_found = 0;
+static gatt_client_t gc_context;
+
+static le_service_t services[40];
+static int service_count = 0;
+static int service_index = 0;
+static gc_state_t state = TC_IDLE;
+
+static void printUUID(uint8_t * uuid128, uint16_t uuid16){
+    if (uuid16){
+        xprintf("%04x",uuid16);
+    } else {
+        printUUID128(uuid128);
+    }
+}
+
+int battery = -1;
+
+static void dump_meter(advertising_report_t * e){
+int temperature[2];
+int humidity;
+int freeze;
+
+    if (e->address[0] == 0x11 && e->address[1] == 0x2b &&
+        e->address[2] == 0x30) {
+        // Data from Type: 0xFF (Manufacturer Specific Data)
+        if (e->event_type == 0 && e->length == 18) {
+            temperature[0] = e->data[16] & 0x7f;
+            temperature[1] = e->data[15] & 0x0f;
+            humidity = e->data[17] & 0x7f;
+            freeze = (e->data[16] & 0x80 == 0);
+            if (battery != -1) {
+                if(freeze)
+                    xprintf("-%d.%d,%d,%d\n", temperature[0], temperature[1],
+                        humidity, battery);
+                else
+                    xprintf("%d.%d,%d,%d\n", temperature[0], temperature[1],
+                        humidity, battery);
+            }
+        }
+        // Data from Type: 0x16 (Service Data)
+        if (e->event_type == 4 && e->length == 10) {
+            battery = e->data[6] & 0x7f;
+/*
+            temperature[0] = e->data[8] & 0x7f;
+            temperature[1] = e->data[7] & 0x0f;
+            humidity = e->data[9] & 0x7f;
+            freeze = (e->data[8] & 0x80 == 0);
+*/
+        }
+    }
+}
+
+static void dump_advertising_report(advertising_report_t * e){
+    if (e->address[0] == 0x11 && e->address[1] == 0x2b &&
+        e->address[2] == 0x30) {
+    xprintf("    * adv. event: evt-type %u, addr-type %u, addr %s, rssi -%u, length adv %u, data: ", e->event_type,
+           e->address_type, bd_addr_to_str(e->address), 256 - e->rssi, e->length);
+    int i;
+    for (i = 0; i < e->length; ++i) {
+       xprintf("%02x ", *(e->data + i));
+    }
+   xprintf("\r\n");
+    }
+    
+}
+
+static void fill_advertising_report_from_packet(advertising_report_t * report, uint8_t *packet){
+    int pos = 2;
+    report->event_type = packet[pos++];
+    report->address_type = packet[pos++];
+    memcpy(report->address, &packet[pos], 6);
+    pos += 6;
+    report->rssi = packet[pos++];
+    report->length = packet[pos++];
+    report->data = &packet[pos];
+    pos += report->length;
+#ifdef DEBUGADV
+    dump_advertising_report(report);
+#else
+    dump_meter(report);
+#endif
+    
+    bd_addr_t found_device_addr;
+    memcpy(found_device_addr, report->address, 6);
+    swapX(found_device_addr, report->address, 6);
+}
+
+static void handle_hci_event(void * connection, uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+    if (packet_type != HCI_EVENT_PACKET) return;
+    advertising_report_t report;
+    uint16_t gc_handle;
+
+    uint8_t event = packet[0];
+    switch (event) {
+        case BTSTACK_EVENT_STATE:
+            // BTstack activated, get started
+            if (packet[2] != HCI_STATE_WORKING) break;
+            if (cmdline_addr_found){
+                xprintf("Trying to connect to %s\n", bd_addr_to_str(cmdline_addr));
+                state = TC_W4_CONNECT;
+                le_central_connect(&cmdline_addr, 0);
+                break;
+            }
+//            xprintf("BTstack activated, start scanning!\n");
+            state = TC_W4_SCAN_RESULT;
+            le_central_start_scan();
+            break;
+        case GAP_LE_ADVERTISING_REPORT:
+            if (state != TC_W4_SCAN_RESULT) return;
+//            state = TC_W4_CONNECT;
+            fill_advertising_report_from_packet(&report, packet);
+            // stop scanning, and connect to the device
+//            le_central_stop_scan();
+//            le_central_connect(&report.address,report.address_type);
+            break;
+#if 0
+        case HCI_EVENT_LE_META:
+            // wait for connection complete
+            if (packet[2] !=  HCI_SUBEVENT_LE_CONNECTION_COMPLETE) break;
+            if (state != TC_W4_CONNECT) return;
+            gc_handle = READ_BT_16(packet, 4);
+            // initialize gatt client context with handle, and add it to the list of active clients
+            gatt_client_start(&gc_context, gc_handle);
+            // query primary services
+            state = TC_W4_SERVICE_RESULT;
+            gatt_client_discover_primary_services(&gc_context);
+            break;
+        case HCI_EVENT_DISCONNECTION_COMPLETE:
+            xprintf("\ntest client - DISCONNECTED\n");
+            gatt_client_stop(&gc_context);
+            exit(0);
+            break;
+#endif
+        default:
+            break;
+    }
+}
+
+static hci_uart_config_t  config;
+void setup(void){
+
+    // init HCI
+    hci_transport_t    * transport = hci_transport_pic32_instance();
+    hci_uart_config_t  * config    = NULL;
+    bt_control_t       * control   = NULL;
+    remote_device_db_t * remote_db = (remote_device_db_t *) &remote_device_db_memory;
+    hci_init(transport, config, control, remote_db);
+
+    l2cap_init();
+    l2cap_register_packet_handler(&handle_hci_event);
+}
+
