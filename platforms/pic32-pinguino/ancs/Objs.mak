@@ -3,16 +3,16 @@
 #
 
 OBJS = \
-	main.o \
-	xprintf.o \
-	uart1.o \
-	crt.o \
-	sbrk.o \
-	led.o \
-	hal_cpu.o \
-	config.o \
-	usb_config.o \
-	Microchip/USB/usb_host.o \
+	../src/main.o \
+	../src/xprintf.o \
+	../src/uart1.o \
+	../src/crt.o \
+	../src/sbrk.o \
+	../src/led.o \
+	../src/hal_cpu.o \
+	../src/config.o \
+	../src/usb_config.o \
+	../Microchip/USB/usb_host.o \
 	TimeDelay.o \
 	${BTSTACK_ROOT}/src/btstack_memory.o \
 	${BTSTACK_ROOT}/src/linked_list.o \
@@ -20,7 +20,7 @@ OBJS = \
 	${BTSTACK_ROOT}/src/run_loop.o \
 	${BTSTACK_ROOT}/src/run_loop_embedded.o \
 	${BTSTACK_ROOT}/src/sdp_util.o \
-	hci_transport_pic32.o \
+	../src/hci_transport_pic32.o \
 	\
 	${BTSTACK_ROOT}/src/hci.o \
 	${BTSTACK_ROOT}/src/hci_cmds.o \
