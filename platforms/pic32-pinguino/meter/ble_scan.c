@@ -63,6 +63,8 @@
 #include "bt_control_cc256x.h"
 #endif
 
+#include "HardwareProfile.h"
+
 typedef struct advertising_report {
     uint8_t   type;
     uint8_t   event_type;
@@ -112,6 +114,7 @@ int freeze;
         e->address[2] == 0x30) {
         // Data from Type: 0xFF (Manufacturer Specific Data)
         if (e->event_type == 0 && e->length == 18) {
+            PORTToggleBits(IOPORT_B, BIT_15);
             temperature[0] = e->data[16] & 0x7f;
             temperature[1] = e->data[15] & 0x0f;
             humidity = e->data[17] & 0x7f;
