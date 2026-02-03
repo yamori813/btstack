@@ -17,12 +17,12 @@ BTSTACK_ROOT=../../..
 #PROC=32MX220F032B
 
 # for PIC32MX230F064B
-#LKRSCRIPT=selfboot64.ld
-#PROC=32MX230F064B
+LKRSCRIPT=selfboot64.ld
+PROC=32MX230F064B
 
 # for PIC32MX250F128B
-LKRSCRIPT=selfboot128.ld
-PROC=32MX250F128B
+#LKRSCRIPT=selfboot128.ld
+#PROC=32MX250F128B
 
 #HEAP_SIZE=512
 HEAP_SIZE=2048
@@ -56,10 +56,10 @@ LDFLAGS=-msoft-float -Wl,--gc-sections $(MIPS16) \
 
 ELF_FLAGS=-EL -Os -ffunction-sections -fdata-sections -march=24kc 
 
-INCLUDEDIRS=-I. -I$(BTSTACK_ROOT)/include -I$(BTSTACK_ROOT)/src \
+INCLUDEDIRS=-I../src -I$(BTSTACK_ROOT)/include -I$(BTSTACK_ROOT)/src \
 	-I$(BTSTACK_ROOT)/ble \
 	-I$(MCS)/USB -I$(MCS)/Microchip/Include -I$(MCS)/Microchip/USB \
-	-I$(MP)/include -I../Microchip/Include/USB/ -I../src
+	-I$(MP)/include -I../Microchip/Include/USB/
 
 include ./Objs.mak
 
@@ -68,6 +68,7 @@ CFLAGS+=-D__PIC32MX__ -D__$(PROC)__
 CFLAGS+=-D__PIC32_FEATURE_SET__=200
 #CFLAGS+=-DCONFIG_12MHz
 #CFLAGS+=-DUSBHOSTBT_DEBUG
+#CFLAGS+=-DDEBUGADV
 CFLAGS+=-D__XC32
 
 all: $(OBJS)
@@ -90,7 +91,7 @@ TimeDelay.o : $(MCS)/Microchip/Common/TimeDelay.c
 	$(CC) $(ELF_FLAGS) $(INCLUDEDIRS) -I$(PINPATH)/p32/include/non-free -c $< -o $@
 
 size:
-	$(SIZE) mainb32.elf
+	$(SIZE) main32.elf
 
 objdump:
 	$(OBJDUMP) -m mips:isa32r2 -b ihex -D main32.hex

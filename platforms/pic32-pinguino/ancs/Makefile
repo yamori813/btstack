@@ -56,10 +56,10 @@ LDFLAGS=-msoft-float -Wl,--gc-sections $(MIPS16) \
 
 ELF_FLAGS=-EL -Os -ffunction-sections -fdata-sections -march=24kc 
 
-INCLUDEDIRS=-I. -I$(BTSTACK_ROOT)/include -I$(BTSTACK_ROOT)/src \
+INCLUDEDIRS=-I. -I../src -I$(BTSTACK_ROOT)/include -I$(BTSTACK_ROOT)/src \
 	-I$(BTSTACK_ROOT)/ble \
 	-I$(MCS)/USB -I$(MCS)/Microchip/Include -I$(MCS)/Microchip/USB \
-	-I$(MP)/include -I../Microchip/Include/USB/ -I../src
+	-I$(MP)/include -I../Microchip/Include/USB/
 
 include ./Objs.mak
 

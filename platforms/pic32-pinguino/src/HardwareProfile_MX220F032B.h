@@ -75,7 +75,7 @@
 
 
     /** UART ***********************************************************/
-    #define BAUDRATE2       57600UL
+    #define BAUDRATE2       115200UL
     #define BRG_DIV2        4 
     #define BRGH2           1 
 

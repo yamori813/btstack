@@ -13,7 +13,7 @@
     #define TIMER_PERIOD                37500               // At 60MHz
 
 #if defined (__PIC32MX__)
-    #define BAUDRATE2       57600UL
+    #define BAUDRATE2       115200UL
     #define BRG_DIV2        4 
     #define BRGH2           1 
 #endif
