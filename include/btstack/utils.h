@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2009 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,11 +13,8 @@
  * 3. Neither the name of the copyright holders nor the names of
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 4. Any redistribution, use, or modification is done solely for
- *    personal benefit and not for any commercial purpose or for
- *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -29,9 +26,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
  *
  */
 
@@ -68,7 +62,6 @@ typedef uint8_t bd_addr_t[BD_ADDR_LEN];
  * @brief link key and its type
  */
 #define LINK_KEY_LEN 16
-#define LINK_KEY_STR_LEN (LINK_KEY_LEN*2)
 typedef uint8_t link_key_t[LINK_KEY_LEN]; 
 
 typedef enum {
@@ -131,34 +124,22 @@ void bt_flip_addr(bd_addr_t dest, bd_addr_t src);
 void net_store_16(uint8_t *buffer, uint16_t pos, uint16_t value);
 void net_store_32(uint8_t *buffer, uint16_t pos, uint32_t value);
 
-// hack: compilation with the android ndk causes an error as there's a swap64 macro
-#ifdef swap64
-#undef swap64
-#endif
-
 void swapX(const uint8_t *src, uint8_t *dst, int len);
 void swap24(const uint8_t  src[3],  uint8_t dst[3]);
 void swap56(const uint8_t  src[7],  uint8_t dst[7]);
 void swap64(const uint8_t  src[8],  uint8_t dst[8]);
 void swap128(const uint8_t src[16], uint8_t dst[16]);
 
-void printf_hexdump(const void *data, int size);
-void hexdump(const void *data, int size);
-void hexdumpf(const void *data, int size);
-char * uuid128_to_str(uint8_t * uuid);
+void hexdump(void *data, int size);
 void printUUID128(uint8_t *uuid);
-void log_key(const char * name, sm_key_t key);
+void print_key(const char * name, sm_key_t key);
 
 // @deprecated please use more convenient bd_addr_to_str
 void print_bd_addr( bd_addr_t addr);
-
 char * bd_addr_to_str(bd_addr_t addr);
-char * link_key_to_str(link_key_t link_key);
-char *link_key_type_to_str(link_key_type_t link_key);
 
 int sscan_bd_addr(uint8_t * addr_string, bd_addr_t addr);
-int sscan_link_key(char * addr_string, link_key_t link_key);
-
+    
 uint8_t crc8_check(uint8_t *data, uint16_t len, uint8_t check_sum);
 uint8_t crc8_calc(uint8_t *data, uint16_t len);
 

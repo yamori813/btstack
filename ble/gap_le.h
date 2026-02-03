@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2012 BlueKitchen GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,8 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at contact@bluekitchen-gmbh.com
  *
  */
 
@@ -41,8 +40,6 @@
 #if defined __cplusplus
 extern "C" {
 #endif
-
-#include <btstack/utils.h>
 
 typedef enum {
     GAP_RANDOM_ADDRESS_TYPE_OFF = 0,
@@ -61,18 +58,6 @@ void gap_random_address_set_mode(gap_random_address_type_t random_address_type);
  * @param period_ms in ms
  */
  void gap_random_address_set_update_period(int period_ms);
-
-/**
- * @brief Updates the connection parameters for a given LE connection
- * @param handle
- * @param conn_interval_min (unit: 1.25ms)
- * @param conn_interval_max (unit: 1.25ms)
- * @param conn_latency
- * @param supervision_timeout (unit: 10ms)
- * @returns 0 if ok
- */
-void gap_update_connection_parameters(hci_con_handle_t con_handle, uint16_t conn_interval_min,
-	uint16_t conn_interval_max, uint16_t conn_latency, uint16_t supervision_timeout);
 
 #if defined __cplusplus
 }

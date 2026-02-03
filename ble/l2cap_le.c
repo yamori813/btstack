@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2012 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,8 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at btstack@ringwald.ch
  *
  */
 
@@ -42,6 +41,8 @@
  *
  *  Created by Matthias Ringwald on 5/16/09.
  */
+
+#include "btstack-config.h"
 
 #include "l2cap.h"
 #include "hci.h"
@@ -60,7 +61,7 @@ static void (*packet_handler) (void * connection, uint8_t packet_type, uint16_t 
 static btstack_packet_handler_t attribute_protocol_packet_handler;
 static btstack_packet_handler_t security_protocol_packet_handler;
 
-void l2cap_init(void){
+void l2cap_init(){
     
     packet_handler = NULL;
     attribute_protocol_packet_handler = NULL;
@@ -74,11 +75,7 @@ void l2cap_init(void){
 }
 
 uint16_t l2cap_max_mtu(void){
-    return HCI_ACL_PAYLOAD_SIZE - L2CAP_HEADER_SIZE;
-}
-
-uint16_t l2cap_max_le_mtu(void){
-    return l2cap_max_mtu();
+    return hci_max_acl_data_packet_length() - L2CAP_HEADER_SIZE;
 }
 
 /** Register L2CAP packet handlers */
@@ -86,14 +83,8 @@ void l2cap_register_packet_handler(void (*handler)(void * connection, uint8_t pa
     packet_handler = handler;
 }
 
-// @deprecated
 int l2cap_can_send_connectionless_packet_now(void){
-    // TODO provide real handle
-    return l2cap_can_send_fixed_channel_packet_now(0x1234);
-}
-
-int  l2cap_can_send_fixed_channel_packet_now(uint16_t handle){
-    return hci_can_send_acl_packet_now(handle);
+    return hci_can_send_packet_now_using_packet_buffer(HCI_ACL_DATA_PACKET);
 }
 
 uint8_t *l2cap_get_outgoing_buffer(void){
@@ -115,12 +106,12 @@ int l2cap_send_prepared_connectionless(uint16_t handle, uint16_t cid, uint16_t l
         return BTSTACK_ACL_BUFFERS_FULL;
     }
 
-    if (!hci_can_send_prepared_acl_packet_now(handle)){
-        log_info("l2cap_send_prepared_connectionless handle %u,, cid %u, cannot send", handle, cid);
+    if (!hci_can_send_packet_now(HCI_ACL_DATA_PACKET)){
+        log_info("l2cap_send_prepared_connectionless handle %u,, cid %u, cannot send\n", handle, cid);
         return BTSTACK_ACL_BUFFERS_FULL;
     }
     
-    log_debug("l2cap_send_prepared_connectionless handle %u, cid %u", handle, cid);
+    log_debug("l2cap_send_prepared_connectionless handle %u, cid %u\n", handle, cid);
     
     uint8_t *acl_buffer = hci_get_outgoing_packet_buffer();
 
@@ -133,15 +124,15 @@ int l2cap_send_prepared_connectionless(uint16_t handle, uint16_t cid, uint16_t l
     // 6 - L2CAP channel DEST
     bt_store_16(acl_buffer, 6, cid);    
     // send
-    int err = hci_send_acl_packet_buffer(len+8);
+    int err = hci_send_acl_packet(acl_buffer, len+8);
         
     return err;
 }
 
 int l2cap_send_connectionless(uint16_t handle, uint16_t cid, uint8_t *data, uint16_t len){
 
-    if (!hci_can_send_acl_packet_now(handle)){
-        log_info("l2cap_send_connectionless cid %u, cannot send", cid);
+    if (!hci_can_send_packet_now_using_packet_buffer(HCI_ACL_DATA_PACKET)){
+        log_info("l2cap_send_connectionless cid %u, cannot send\n", cid);
         return BTSTACK_ACL_BUFFERS_FULL;
     }
 
@@ -154,7 +145,8 @@ int l2cap_send_connectionless(uint16_t handle, uint16_t cid, uint8_t *data, uint
 }
 
 void l2cap_event_handler( uint8_t *packet, uint16_t size ){
-    
+	log_info("l2cap_event_handler");
+
     // pass on
     if (packet_handler) {
         (*packet_handler)(NULL, HCI_EVENT_PACKET, 0, packet, size);
@@ -168,7 +160,7 @@ void l2cap_event_handler( uint8_t *packet, uint16_t size ){
 }
 
 void l2cap_acl_handler( uint8_t *packet, uint16_t size ){
-        
+
     // Get Channel ID
     uint16_t channel_id = READ_L2CAP_CHANNEL_ID(packet); 
     hci_con_handle_t handle = READ_ACL_CONNECTION_HANDLE(packet);

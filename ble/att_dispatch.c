@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2014 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,15 +30,15 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at btstack@ringwald.ch
  *
  */
-
 
 /**
  * Dispatcher for independent implementation of ATT client and server
  */
+
+#include "btstack-config.h"
 
 #include "l2cap.h"
 
@@ -54,9 +54,9 @@ static void dummy_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *
 }
 
 static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
+	log_info("%s att_packet_handler %d", __FILE__, packet_type);
 	switch (packet_type){
 		case ATT_DATA_PACKET: {
-			// log_info("att_data_packet with opcode 0x%x", packet[0]);
 			uint8_t att_pdu_odd = packet[0] & 1;
 			if (att_pdu_odd){
 				// odd PDUs are sent from server to client

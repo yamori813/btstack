@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2009-2012 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,34 +30,34 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at btstack@ringwald.ch
  *
  */
 
-#ifndef __ANCS_CLIENT_LIB_H
-#define __ANCS_CLIENT_LIB_H
+//
+//  platform_iphone.h
+//
+//  support for the iPhone platform
+//
+//  Created by Matthias Ringwald on 8/15/09.
+//
+
+#ifndef __PLATFORM_IPHONE_H
+#define __PLATFORM_IPHONE_H
+
+#include "hci.h"
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
-#include <stdint.h>
-
-typedef struct ancs_event{
-    uint8_t  type;
-    uint16_t handle;
-    uint16_t attribute_id;
-    const char * text;
-} ancs_event_t;
-
-void ancs_client_init(void);
-void ancs_client_hci_event_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-void ancs_client_register_callback(void (*handler)(ancs_event_t * event));
-const char * ancs_client_attribute_name_for_id(int id);
+void platform_iphone_status_handler(BLUETOOTH_STATE state);
+void platform_iphone_register_window_manager_restart(void (*callback)());
+void platform_iphone_register_preferences_changed(void (*callback)());
+int  platform_iphone_logging_enabled(void);
 
 #if defined __cplusplus
 }
 #endif
 
-#endif
+#endif // __PLATFORM_IPHONE_H

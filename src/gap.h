@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2012 BlueKitchen GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,8 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at contact@bluekitchen-gmbh.com
  *
  */
 
@@ -77,19 +76,17 @@ typedef enum {
 	// GAP_SECURITY_AUTHORIZED
 } gap_security_state;
 
-/* API_START */
-
 /**
- * @brief Enable/disable bonding. Default is enabled.
- * @param enabled
+ * @bbrief enable/disable bonding. default is enabled
+ * @praram enabled
  */
 void gap_set_bondable_mode(int enabled);
 
 /**
- * @brief Start dedicated bonding with device. Disconnect after bonding.
+ * @brief start dedicated bonding with device. disconnect after bonding
  * @param device
  * @param request MITM protection
- * @return error, if max num acl connections active
+ * @returns error, if max num acl connections active
  * @result GAP_DEDICATED_BONDING_COMPLETE
  */
 int gap_dedicated_bonding(bd_addr_t device, int mitm_protection_required);
@@ -100,13 +97,11 @@ gap_security_level_t gap_security_level(hci_con_handle_t con_handle);
 void gap_request_security_level(hci_con_handle_t con_handle, gap_security_level_t level);
 int  gap_mitm_protection_required_for_security_level(gap_security_level_t level);
 
-/** 
- * @brief Sets local name.
- * @note has to be done before stack starts up
- * @param name is not copied, make sure memory is accessible during stack startup
+/** @brief sets local name
+ *  @note has to be done before stack starts up
+ *  @param name is not copied, make sure memory is accessible during stack startup
  */
 void gap_set_local_name(const char * local_name);
-/* API_END*/
 
 #if defined __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2013 by BlueKitchen GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,11 +13,10 @@
  * 3. Neither the name of the copyright holders nor the names of
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 4. Any redistribution, use, or modification is done solely for
- *    personal benefit and not for any commercial purpose or for
- *    monetary gain.
+ * 4. This software may not be used in a commercial product
+ *    without an explicit license granted by the copyright holder. 
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,17 +29,13 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
- *
  */
 
-
-// *****************************************************************************
+//*****************************************************************************
 //
 // Advertising Data Parser 
 //
-// *****************************************************************************
+//*****************************************************************************
 
 #include <stdint.h>
 #include <stdio.h>
@@ -124,9 +119,6 @@ int ad_data_contains_uuid16(uint8_t ad_len, uint8_t * ad_data, uint16_t uuid16){
 
 int ad_data_contains_uuid128(uint8_t ad_len, uint8_t * ad_data, uint8_t * uuid128){
     ad_context_t context;
-    // input in big endian/network order, bluetooth data in little endian
-    uint8_t uuid128_le[16];
-    swap128(uuid128, uuid128_le);
     for (ad_iterator_init(&context, ad_len, ad_data) ; ad_iterator_has_more(&context) ; ad_iterator_next(&context)){
         uint8_t data_type = ad_iterator_get_data_type(&context);
         uint8_t data_len  = ad_iterator_get_data_len(&context);
@@ -134,8 +126,7 @@ int ad_data_contains_uuid128(uint8_t ad_len, uint8_t * ad_data, uint8_t * uuid12
         
         int i;
         uint8_t ad_uuid128[16];
-
-
+                
         switch (data_type){
             case IncompleteList16:
             case CompleteList16:
@@ -143,14 +134,14 @@ int ad_data_contains_uuid128(uint8_t ad_len, uint8_t * ad_data, uint8_t * uuid12
                     uint16_t uuid16 = READ_BT_16(data, i);
                     sdp_normalize_uuid(ad_uuid128, uuid16);
                     
-                    if (memcmp(ad_uuid128, uuid128_le, 16) == 0) return 1;
+                    if (memcmp(ad_uuid128, uuid128, 16) == 0) return 1;
                 }
 
                 break;
             case IncompleteList128:
             case CompleteList128:
                 for (i=0; i<data_len; i+=16){
-                    if (memcmp(uuid128_le, &data[i], 16) == 0) return 1;
+                    if (memcmp(uuid128, &data[i], 16) == 0) return 1;
                 }
                 break;
             default:

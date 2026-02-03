@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2012 BlueKitchen GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,30 +30,38 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at contact@bluekitchen-gmbh.com
  *
  */
+#include  "central_device_db.h"
 
-/*
- *  hal_time_ms.h
- *
- *  Hardware abstraction layer for system clock with millisecond resolution
- *
- */
+ // Central Device db interface
+void central_device_db_init(){}
 
-#ifndef __HAL_TIME_MS_H
-#define __HAL_TIME_MS_H
-
-#include <stdint.h>
-
-#if defined __cplusplus
-extern "C" {
-#endif
-
-uint32_t hal_time_ms(void);
-
-#if defined __cplusplus
+// @returns index if successful, -1 otherwise
+int central_device_db_add(int addr_type, bd_addr_t addr, sm_key_t irk, sm_key_t csrk){
+	return -1;
 }
-#endif
-#endif // __HAL_TIME_MS_H
+
+// @returns number of device in db
+int central_device_db_count(void){
+	return 0;
+}
+
+// get device information: addr type and address
+void central_device_db_info(int index, int * addr_type, bd_addr_t addr, sm_key_t csrk){}
+
+// get signature key
+void central_device_db_csrk(int index, sm_key_t csrk){}
+
+// query last used/seen signing counter
+uint32_t central_device_db_counter_get(int index){ 
+	return 0xffffffff;
+}
+
+// update signing counter
+void central_device_db_counter_set(int index, uint32_t counter){}
+
+// free device
+void central_device_db_remove(int index){}
+

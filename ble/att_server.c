@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2012 BlueKitchen GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,11 +30,9 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at contact@bluekitchen-gmbh.com
  *
  */
-
 
 //
 // ATT Server Globals
@@ -59,7 +57,7 @@
 #include "att.h"
 #include "att_dispatch.h"
 #include "gap_le.h"
-#include "le_device_db.h"
+#include "central_device_db.h"
 
 #include "att_server.h"
 
@@ -78,9 +76,9 @@ static att_server_state_t att_server_state;
 static uint8_t   att_client_addr_type;
 static bd_addr_t att_client_address;
 static uint16_t  att_request_size   = 0;
-static uint8_t   att_request_buffer[HCI_ACL_PAYLOAD_SIZE];
+static uint8_t   att_request_buffer[28];
 
-static int       att_ir_le_device_db_index = -1;
+static int       att_ir_central_device_db_index = -1;
 static int       att_ir_lookup_active = 0;
 
 static int       att_handle_value_indication_handle = 0;    
@@ -88,10 +86,12 @@ static timer_source_t att_handle_value_indication_timer;
 
 static btstack_packet_handler_t att_client_packet_handler = NULL;
 
+// should that go into l2cap[_le].c? Should it actually use the handle?
+static uint16_t l2cap_max_mtu_for_handle(uint16_t handle){
+    return l2cap_max_mtu();
+}
+
 static void att_handle_value_indication_notify_client(uint8_t status, uint16_t client_handle, uint16_t attribute_handle){
-    
-    if (!att_client_packet_handler) return;
-    
     uint8_t event[7];
     int pos = 0;
     event[pos++] = ATT_HANDLE_VALUE_INDICATION_COMPLETE;
@@ -100,21 +100,6 @@ static void att_handle_value_indication_notify_client(uint8_t status, uint16_t c
     bt_store_16(event, pos, client_handle);
     pos += 2;
     bt_store_16(event, pos, attribute_handle);
-    pos += 2;
-    (*att_client_packet_handler)(HCI_EVENT_PACKET, 0, &event[0], sizeof(event));
-}
-
-static void att_emit_mtu_event(uint16_t handle, uint16_t mtu){
-
-    if (!att_client_packet_handler) return;
-
-    uint8_t event[6];
-    int pos = 0;
-    event[pos++] = ATT_MTU_EXCHANGE_COMPLETE;
-    event[pos++] = sizeof(event) - 2;
-    bt_store_16(event, pos, handle);
-    pos += 2;
-    bt_store_16(event, pos, mtu);
     pos += 2;
     (*att_client_packet_handler)(HCI_EVENT_PACKET, 0, &event[0], sizeof(event));
 }
@@ -143,8 +128,7 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
                             bt_flip_addr(att_client_address, &packet[8]);
                             // reset connection properties
                             att_connection.con_handle = READ_BT_16(packet, 4);
-                            att_connection.mtu = ATT_DEFAULT_MTU;
-                            att_connection.max_mtu = l2cap_max_le_mtu();
+                            att_connection.mtu = l2cap_max_mtu_for_handle(att_connection.con_handle);
                             att_connection.encryption_key_size = 0;
                             att_connection.authenticated = 0;
 		                	att_connection.authorized = 0;
@@ -172,19 +156,19 @@ static void att_event_packet_handler (uint8_t packet_type, uint16_t channel, uin
                     break;
                     
                 case SM_IDENTITY_RESOLVING_STARTED:
-                    log_info("SM_IDENTITY_RESOLVING_STARTED");
+//                    printf("SM_IDENTITY_RESOLVING_STARTED\n");
                     att_ir_lookup_active = 1;
                     break;
                 case SM_IDENTITY_RESOLVING_SUCCEEDED:
                     att_ir_lookup_active = 0;
-                    att_ir_le_device_db_index = ((sm_event_t*) packet)->le_device_db_index;
-                    log_info("SM_IDENTITY_RESOLVING_SUCCEEDED id %u", att_ir_le_device_db_index);
+                    att_ir_central_device_db_index = ((sm_event_t*) packet)->central_device_db_index;
+//                    printf("SM_IDENTITY_RESOLVING_SUCCEEDED id %u\n", att_ir_central_device_db_index);
                     att_run();
                     break;
                 case SM_IDENTITY_RESOLVING_FAILED:
-                    log_info("SM_IDENTITY_RESOLVING_FAILED");
+//                    printf("SM_IDENTITY_RESOLVING_FAILED\n");
                     att_ir_lookup_active = 0;
-                    att_ir_le_device_db_index = -1;
+                    att_ir_central_device_db_index = -1;
                     att_run();
                     break;
 
@@ -211,14 +195,14 @@ static void att_signed_write_handle_cmac_result(uint8_t hash[8]){
     if (att_server_state != ATT_SERVER_W4_SIGNED_WRITE_VALIDATION) return;
 
     if (memcmp(hash, &att_request_buffer[att_request_size-8], 8)){
-        log_info("ATT Signed Write, invalid signature");
+//        printf("ATT Signed Write, invalid signature\n");
         att_server_state = ATT_SERVER_IDLE;
         return;
     }
 
     // update sequence number
     uint32_t counter_packet = READ_BT_32(att_request_buffer, att_request_size-12);
-    le_device_db_remote_counter_set(att_ir_le_device_db_index, counter_packet+1);
+    central_device_db_counter_set(att_ir_central_device_db_index, counter_packet+1);
     att_server_state = ATT_SERVER_REQUEST_RECEIVED_AND_VALIDATED;
     att_run();
 }
@@ -230,49 +214,49 @@ static void att_run(void){
             return;
         case ATT_SERVER_REQUEST_RECEIVED:
             if (att_request_buffer[0] == ATT_SIGNED_WRITE_COMMAND){
-                log_info("ATT Signed Write!");
+//                printf("ATT Signed Write!\n");
                 if (!sm_cmac_ready()) {
-                    log_info("ATT Signed Write, sm_cmac engine not ready. Abort");
+//                    printf("ATT Signed Write, sm_cmac engine not ready. Abort\n");
                     att_server_state = ATT_SERVER_IDLE;
                      return;
                 }  
                 if (att_request_size < (3 + 12)) {
-                    log_info("ATT Signed Write, request to short. Abort.");
+//                    printf("ATT Signed Write, request to short. Abort.\n");
                     att_server_state = ATT_SERVER_IDLE;
                     return;
                 }
                 if (att_ir_lookup_active){
                     return;
                 }
-                if (att_ir_le_device_db_index < 0){
-                    log_info("ATT Signed Write, CSRK not available");
+                if (att_ir_central_device_db_index < 0){
+//                    printf("ATT Signed Write, CSRK not available\n");
                     att_server_state = ATT_SERVER_IDLE;
                     return;
                 }
 
                 // check counter
                 uint32_t counter_packet = READ_BT_32(att_request_buffer, att_request_size-12);
-                uint32_t counter_db     = le_device_db_remote_counter_get(att_ir_le_device_db_index);
-                log_info("ATT Signed Write, DB counter %u, packet counter %u", counter_db, counter_packet);
+                uint32_t counter_db     = central_device_db_counter_get(att_ir_central_device_db_index);
+//                printf("ATT Signed Write, DB counter %u, packet counter %u\n", counter_db, counter_packet);
                 if (counter_packet < counter_db){
-                    log_info("ATT Signed Write, db reports higher counter, abort");
+//                    printf("ATT Signed Write, db reports higher counter, abort\n");
                     att_server_state = ATT_SERVER_IDLE;
                     return;
                 }
 
                 // signature is { sequence counter, secure hash }
                 sm_key_t csrk;
-                le_device_db_csrk_get(att_ir_le_device_db_index, csrk);
+                central_device_db_csrk(att_ir_central_device_db_index, csrk);
                 att_server_state = ATT_SERVER_W4_SIGNED_WRITE_VALIDATION;
-                log_info("Orig Signature: ");
+//                printf("Orig Signature: ");
                 hexdump( &att_request_buffer[att_request_size-8], 8);
-                sm_cmac_start(csrk, att_request_size - 12, att_request_buffer, counter_packet, att_signed_write_handle_cmac_result);
+                sm_cmac_start(csrk, att_request_size - 8, att_request_buffer, att_signed_write_handle_cmac_result);
                 return;
             } 
             // NOTE: fall through for regular commands
 
         case ATT_SERVER_REQUEST_RECEIVED_AND_VALIDATED:
-            if (!l2cap_can_send_fixed_channel_packet_now(att_connection.con_handle)) return;
+            if (!l2cap_can_send_connectionless_packet_now()) return;
 
             l2cap_reserve_packet_buffer();
             uint8_t * att_response_buffer = l2cap_get_outgoing_buffer();
@@ -304,17 +288,12 @@ static void att_run(void){
             }
 
             l2cap_send_prepared_connectionless(att_connection.con_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, att_response_size);
-
-            // notify client about MTU exchange result
-            if (att_response_buffer[0] == ATT_EXCHANGE_MTU_RESPONSE){
-                att_emit_mtu_event(att_connection.con_handle, att_connection.mtu);
-            }
-
             break;
     }
 }
 
 static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *packet, uint16_t size){
+	log_info("%s att_packet_handler %d", __FILE__, packet_type);
     if (packet_type != ATT_DATA_PACKET) return;
 
     // handle value indication confirms
@@ -342,9 +321,9 @@ static void att_packet_handler(uint8_t packet_type, uint16_t handle, uint8_t *pa
 
 void att_server_init(uint8_t const * db, att_read_callback_t read_callback, att_write_callback_t write_callback){
 
-    sm_register_packet_handler(att_event_packet_handler);
+	sm_register_packet_handler(att_event_packet_handler);
 
-    att_dispatch_register_server(att_packet_handler);
+	att_dispatch_register_server(att_packet_handler);
 
     att_server_state = ATT_SERVER_IDLE;
     att_set_db(db);
@@ -357,13 +336,13 @@ void att_server_register_packet_handler(btstack_packet_handler_t handler){
     att_client_packet_handler = handler;    
 }
 
-int  att_server_can_send(void){
+int  att_server_can_send(){
 	if (att_connection.con_handle == 0) return 0;
-	return l2cap_can_send_fixed_channel_packet_now(att_connection.con_handle);
+	return l2cap_can_send_connectionless_packet_now();
 }
 
 int att_server_notify(uint16_t handle, uint8_t *value, uint16_t value_len){
-    if (!l2cap_can_send_fixed_channel_packet_now(att_connection.con_handle)) return BTSTACK_ACL_BUFFERS_FULL;
+    if (!l2cap_can_send_connectionless_packet_now()) return BTSTACK_ACL_BUFFERS_FULL;
 
     l2cap_reserve_packet_buffer();
     uint8_t * packet_buffer = l2cap_get_outgoing_buffer();
@@ -373,7 +352,7 @@ int att_server_notify(uint16_t handle, uint8_t *value, uint16_t value_len){
 
 int att_server_indicate(uint16_t handle, uint8_t *value, uint16_t value_len){
     if (att_handle_value_indication_handle) return ATT_HANDLE_VALUE_INDICATION_IN_PORGRESS;
-    if (!l2cap_can_send_fixed_channel_packet_now(att_connection.con_handle)) return BTSTACK_ACL_BUFFERS_FULL;
+    if (!l2cap_can_send_connectionless_packet_now()) return BTSTACK_ACL_BUFFERS_FULL;
 
     // track indication
     att_handle_value_indication_handle = handle;

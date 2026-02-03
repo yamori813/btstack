@@ -34,6 +34,6 @@ OBJS = \
 	${BTSTACK_ROOT}/ble/l2cap_le.o \
 	${BTSTACK_ROOT}/ble/sm.o \
 	${BTSTACK_ROOT}/ble/gatt_client.o \
-	${BTSTACK_ROOT}/ble/le_device_db_memory.o 
+	${BTSTACK_ROOT}/ble/central_device_db_memory.o 
 
 

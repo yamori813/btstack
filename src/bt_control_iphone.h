@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2009-2012 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,65 +30,38 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at btstack@ringwald.ch
  *
  */
-#include  "le_device_db.h"
 
- // Central Device db interface
-void le_device_db_init(void){}
-
-// @returns index if successful, -1 otherwise
-int le_device_db_add(int addr_type, bd_addr_t addr, sm_key_t irk){
-	return -1;
-}
-
-// @returns number of device in db
-int le_device_db_count(void){
-	return 0;
-}
-
-/**
- * @brief set remote encryption info
- * @brief index
- * @brief ediv 
- * @brief rand
- * @brief ltk
+/*
+ *  bt_control_iphone.h
+ *
+ *  BT Control API implementation for the iPhone and the iPod Touch
+ *
+ *  Created by Matthias Ringwald on 5/19/09.
  */
-void le_device_db_encryption_set(int index, uint16_t ediv, uint8_t rand[8], sm_key_t ltk){}
+#ifndef __BT_CONTROL_IPHONE_H
+#define __BT_CONTROL_IPHONE_H
+ 
+#include "bt_control.h"
 
-/**
- * @brief get remote encryption info
- * @brief index
- * @brief ediv 
- * @brief rand
- * @brief ltk
- */
-void le_device_db_encryption_get(int index, uint16_t * ediv, uint8_t rand[8], sm_key_t ltk){}
+#if defined __cplusplus
+extern "C" {
+#endif
 
-// get device information: addr type and address
-void le_device_db_info(int index, int * addr_type, bd_addr_t addr, sm_key_t csrk){}
+extern bt_control_t bt_control_iphone;
 
-// get signature key
-void le_device_db_csrk_get(int index, sm_key_t csrk){}
+int  bt_control_iphone_power_management_enabled(void);
+int  bt_control_iphone_power_management_supported(void);
 
-// query last used/seen signing counter
-uint32_t le_device_db_remote_counter_get(int index){ 
-	return 0xffffffff;
+int  iphone_system_bt_enabled(void);
+void iphone_system_bt_set_enabled(int enabled);
+
+int  iphone_system_has_csr(void);
+
+#if defined __cplusplus
 }
+#endif
 
-// update signing counter
-void le_device_db_local_counter_set(int index, uint32_t counter){}
-
-// query last used/seen signing counter
-uint32_t le_device_db_local_counter_get(int index){ 
-	return 0xffffffff;
-}
-
-// update signing counter
-void le_device_db_remote_counter_set(int index, uint32_t counter){}
-
-// free device
-void le_device_db_remove(int index){}
-
+#endif // __BT_CONTROL_IPHONE_H

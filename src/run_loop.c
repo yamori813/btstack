@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2009-2012 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,8 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at btstack@ringwald.ch
  *
  */
 
@@ -41,15 +40,16 @@
  *  Created by Matthias Ringwald on 6/6/09.
  */
 
+#include "btstack-config.h"
+
 #include <btstack/run_loop.h>
+
+#include "debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>  // exit()
 
 #include "run_loop_private.h"
-
-#include "debug.h"
-#include "btstack-config.h"
 
 static run_loop_t * the_run_loop = NULL;
 
@@ -64,10 +64,10 @@ extern run_loop_t run_loop_cocoa;
 #endif
 
 // assert run loop initialized
-static void run_loop_assert(void){
+void run_loop_assert(void){
 #ifndef EMBEDDED
     if (!the_run_loop){
-        log_error("ERROR: run_loop function called before run_loop_init!");
+        log_error("ERROR: run_loop function called before run_loop_init!\n");
         exit(10);
     }
 #endif
@@ -120,7 +120,7 @@ int run_loop_remove_timer(timer_source_t *ts){
     return the_run_loop->remove_timer(ts);
 }
 
-void run_loop_timer_dump(void){
+void run_loop_timer_dump(){
     run_loop_assert();
     the_run_loop->dump_timer();
 }
@@ -128,7 +128,7 @@ void run_loop_timer_dump(void){
 /**
  * Execute run_loop
  */
-void run_loop_execute(void){
+void run_loop_execute() {
     run_loop_assert();
     the_run_loop->execute();
 }
@@ -137,7 +137,7 @@ void run_loop_execute(void){
 void run_loop_init(RUN_LOOP_TYPE type){
 #ifndef EMBEDDED
     if (the_run_loop){
-        log_error("ERROR: run loop initialized twice!");
+        log_error("ERROR: run loop initialized twice!\n");
         exit(10);
     }
 #endif
@@ -159,7 +159,7 @@ void run_loop_init(RUN_LOOP_TYPE type){
 #endif
         default:
 #ifndef EMBEDDED
-            log_error("ERROR: invalid run loop type %u selected!", type);
+            log_error("ERROR: invalid run loop type %u selected!\n", type);
             exit(10);
 #endif
             break;

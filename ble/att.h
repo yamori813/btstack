@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2011-2012 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,11 +30,9 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at btstack@ringwald.ch
  *
  */
-
 
 #ifndef __ATT_H
 #define __ATT_H
@@ -44,9 +42,6 @@
 #if defined __cplusplus
 extern "C" {
 #endif
-
-// Minimum/default MTU
-#define ATT_DEFAULT_MTU               23
 
 // MARK: Attribute PDU Opcodes 
 #define ATT_ERROR_RESPONSE              0x01
@@ -104,7 +99,6 @@ extern "C" {
 #define ATT_ERROR_INSUFFICIENT_ENCRYPTION          0x0f
 #define ATT_ERROR_UNSUPPORTED_GROUP_TYPE           0x10
 #define ATT_ERROR_INSUFFICIENT_RESOURCES           0x11
-#define ATT_ERROR_TIMEOUT                          0x12
 
     
 // custom BTstack error codes
@@ -155,8 +149,7 @@ extern "C" {
 
 typedef struct att_connection {
     uint16_t con_handle;
-    uint16_t mtu;       // initialized to ATT_DEFAULT_MTU (23), negotiated during MTU exchange
-    uint16_t max_mtu;   // local maximal L2CAP_MTU, set to l2cap_max_le_mtu()
+    uint16_t mtu;
     uint8_t  encryption_key_size;
     uint8_t  authenticated;
     uint8_t  authorized;
@@ -203,7 +196,7 @@ void att_set_read_callback(att_read_callback_t callback);
 void att_set_write_callback(att_write_callback_t callback);
 
  /*
-  * @brief debug helper, dump ATT database to stdout using log_info
+  * @brief debug helper, dump ATT database to stdout using printf
   */
 void att_dump_attributes(void);
 
@@ -246,7 +239,7 @@ uint16_t att_prepare_handle_value_indication(att_connection_t * att_connection,
 /*
  * @brief transcation queue of prepared writes, e.g., after disconnect
  */
-void att_clear_transaction_queue(att_connection_t * att_connection);
+void att_clear_transaction_queue();
 
 // experimental client API
 uint16_t att_uuid_for_handle(uint16_t handle);

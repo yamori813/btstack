@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 BlueKitchen GmbH
+ * Copyright (C) 2009-2013 by Matthias Ringwald
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    personal benefit and not for any commercial purpose or for
  *    monetary gain.
  *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY MATTHIAS RINGWALD AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS
@@ -30,8 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
+ * Please inquire about commercial licensing options at btstack@ringwald.ch
  *
  */
 
@@ -88,9 +87,9 @@ int de_state_size(uint8_t eventByte, de_state_t *de_state){
         if (de_state->addon_header_bytes == 0){
             de_state->de_size = de_get_data_size(&eventByte);
             if (de_state->de_size == 0) {
-                log_error("  ERROR: ID size is zero");
+                log_error("  ERROR: ID size is zero\n\r");
             }
-            // log_info("Data element payload is %d bytes.", de_state->de_size);
+            // printf("Data element payload is %d bytes.\n", de_state->de_size);
             return 1;
         }
         de_state->in_state_GET_DE_HEADER_LENGTH = 0;
@@ -102,7 +101,7 @@ int de_state_size(uint8_t eventByte, de_state_t *de_state){
         de_state->addon_header_bytes--;
     } 
     if (de_state->addon_header_bytes > 0) return 0;
-    // log_info("Data element payload is %d bytes.", de_state->de_size);
+    // printf("Data element payload is %d bytes.\n", de_state->de_size);
     de_state->in_state_GET_DE_HEADER_LENGTH = 1;
     return 1;
 }
@@ -121,13 +120,13 @@ void parse(uint8_t eventByte){
     list_offset++;
     record_offset++;
 
-    // log_info(" parse BYTE_RECEIVED %02x", eventByte);
+    // printf(" parse BYTE_RECEIVED %02x\n", eventByte);
     switch(state){
         case GET_LIST_LENGTH:
             if (!de_state_size(eventByte, &de_header_state)) break;
             list_offset = de_header_state.de_offset;
             list_size = de_header_state.de_size;
-            // log_info("parser: List offset %u, list size %u", list_offset, list_size);
+            // printf("parser: List offset %u, list size %u\n", list_offset, list_size);
             
             record_counter = 0;
             state = GET_RECORD_LENGTH;
@@ -136,7 +135,7 @@ void parse(uint8_t eventByte){
         case GET_RECORD_LENGTH:
             // check size
             if (!de_state_size(eventByte, &de_header_state)) break;
-            // log_info("parser: Record payload is %d bytes.", de_header_state.de_size);
+            // printf("parser: Record payload is %d bytes.\n", de_header_state.de_size);
             record_offset = de_header_state.de_offset;
             record_size = de_header_state.de_size;
             state = GET_ATTRIBUTE_ID_HEADER_LENGTH;
@@ -145,7 +144,7 @@ void parse(uint8_t eventByte){
         case GET_ATTRIBUTE_ID_HEADER_LENGTH:
             if (!de_state_size(eventByte, &de_header_state)) break;
             attribute_id = 0;
-            log_info("ID data is stored in %d bytes.", de_header_state.de_size);
+            // printf("ID data is stored in %d bytes.\n", de_header_state.de_size);
             state = GET_ATTRIBUTE_ID;
             break;
         
@@ -153,7 +152,7 @@ void parse(uint8_t eventByte){
             attribute_id = (attribute_id << 8) | eventByte;
             de_header_state.de_size--;
             if (de_header_state.de_size > 0) break;
-            log_info("parser: Attribute ID: %04x.", attribute_id);
+            // printf("parser: Attribute ID: %04x.\n", attribute_id);
 
             state = GET_ATTRIBUTE_VALUE_LENGTH;
             attribute_bytes_received  = 0;
@@ -196,29 +195,29 @@ void parse(uint8_t eventByte){
 
             (*sdp_query_callback)((sdp_query_event_t*)&attribute_value_event);
             }
-            // log_info("paser: attribute_bytes_received %u, attribute_value_size %u", attribute_bytes_received, attribute_value_size);
+            // printf("paser: attribute_bytes_received %u, attribute_value_size %u\n", attribute_bytes_received, attribute_value_size);
 
             if (attribute_bytes_received < attribute_value_size) break;
-            // log_info("parser: Record offset %u, record size %u", record_offset, record_size);
+            // printf("parser: Record offset %u, record size %u\n", record_offset, record_size);
             if (record_offset != record_size){
                 state = GET_ATTRIBUTE_ID_HEADER_LENGTH;
-                // log_info("Get next attribute");
+                // printf("Get next attribute\n");
                 break;
             } 
             record_offset = 0;
-            // log_info("parser: List offset %u, list size %u", list_offset, list_size);
+            // printf("parser: List offset %u, list size %u\n", list_offset, list_size);
             
             if (list_size > 0 && list_offset != list_size){
                 record_counter++;
                 state = GET_RECORD_LENGTH;
-                log_info("parser: END_OF_RECORD");
+                // printf("parser: END_OF_RECORD\n\n");
                 break;
             }
             list_offset = 0;
             de_state_init(&de_header_state);
             state = GET_LIST_LENGTH;
             record_counter = 0;
-            log_info("parser: END_OF_RECORD & DONE");
+            // printf("parser: END_OF_RECORD & DONE\n\n\n");
             break;
         default:
             break;
